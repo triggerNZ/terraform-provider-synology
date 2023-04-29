@@ -11,6 +11,10 @@ type SynologyClient interface {
 	Download(path string) ([]byte, error)
 	Delete(path string, recursive bool) error
 	Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) error
+	CreateGuest(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error)
+	ReadGuest(name string) ([]byte, error)
+	UpdateGuest(name string, new_name string) (error)
+	DeleteGuest(name string) (error)
 }
 
 type synologyClient struct {
@@ -73,6 +77,26 @@ func (client synologyClient) Upload(path string, createParents bool, overwrite b
 	statusCode, err := Upload(client.apiInfo, client.host, client.sid, path, createParents, overwrite, fileName, fileContents)
 	log.Println(statusCode)
 
+	return err
+}
+
+func (client synologyClient) CreateGuest(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error) {
+	return CreateGuest(client.apiInfo, client.host, client.sid, name, storage_id, storage_name, vnics, vdisks)
+}
+
+func (client synologyClient) ReadGuest(name string) ([]byte, error){
+	return ReadGuest(client.apiInfo, client.host, client.sid, name)
+}
+
+func (client synologyClient) UpdateGuest(name string, new_name string) (error) {
+	statusCode, err := UpdateGuest(client.apiInfo, client.host, client.sid, name, new_name)
+	log.Println(statusCode)
+	return err
+}
+
+func (client synologyClient) DeleteGuest(name string) (error) {
+	statusCode, err := DeleteGuest(client.apiInfo, client.host, client.sid, name)
+	log.Println(statusCode)
 	return err
 }
 

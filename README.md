@@ -1,3 +1,7 @@
+# Credits
+
+Fork from https://github.com/sergief/terraform-provider-synology, started from his project to expand and add other APIs aswell.
+
 # Terraform Provider Synology
 
 Provider for managing Synology Resources.
@@ -14,7 +18,7 @@ You don't need to install the golang development environment if you already have
 docker-compose build --no-cache && docker-compose run app make clean build test release
 ```
 
-After this, pick up the version specifically compiled for your OS and architecture from `./bin` and put it in `$HOME/.terraform.d/plugins/github.com/sergief/synology/0.1/$OS_$ARCH/terraform-provider-synology`
+After this, pick up the version specifically compiled for your OS and architecture from `./bin` and put it in `$HOME/.terraform.d/plugins/github.com/arnouthoebreckx/synology/0.1/$OS_$ARCH/terraform-provider-synology`
 
 
 ## Acceptance Tests
@@ -25,16 +29,12 @@ SYNOLOGY_ADDRESS=http://aaa.bbb.ccc.dddd:5000 SYNOLOGY_USERNAME=test_user SYNOLO
 
 ## Terraform Resources
 
-### File
-
-This resource creates a text file in a Synology Filestation.
-Example:
 ```terraform
 terraform {
   required_providers {
     synology = {
       version = "0.1"
-      source = "github.com/sergief/synology"
+      source = "github.com/arnouthoebreckx/synology"
     }
   }
 }
@@ -45,7 +45,32 @@ provider "synology" {
     password = "testpass"
     # these variables can be set as env vars in SYNOLOGY_ADDRESS SYNOLOGY_USERNAME and SYNOLOGY_PASSWORD
 }
+```
+## Virtual Machine Manager
+This resource creates a text file in a Synology Filestation.
+Example:
 
+```
+resource "synology_vmm_guest" "my-guest" {
+  guest_name = "terraform-guest"
+  storage_name = "storage1"
+  vnics {
+    network_name = "default"
+  }
+  vdisks {
+    create_type = 0
+    vdisk_size = 10240
+  }
+}
+
+```
+
+### File
+
+This resource creates a text file in a Synology Filestation.
+Example:
+
+```
 resource "synology_file" "hello-world" {
   filename = "/home/downloaded/hello-world.txt"
   content = "Hello World"
@@ -61,7 +86,7 @@ terraform {
   required_providers {
     synology = {
       version = "0.1"
-      source = "github.com/sergief/synology"
+      source = "github.com/arnouthoebreckx/synology"
     }
   }
 }

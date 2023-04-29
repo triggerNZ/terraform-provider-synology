@@ -1,4 +1,4 @@
-module github.com/sergief/terraform-provider-synology
+module github.com/arnouthoebreckx/terraform-provider-synology
 
 go 1.16
 

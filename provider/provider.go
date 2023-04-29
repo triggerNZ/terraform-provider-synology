@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	"github.com/sergief/terraform-provider-synology/client"
+	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,6 +31,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"synology_file":   fileItem(),
 			"synology_folder": folderItem(),
+			"synology_vmm_guest": guestItem(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

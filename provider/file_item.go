@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sergief/terraform-provider-synology/client"
+	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

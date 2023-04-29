@@ -3,8 +3,7 @@ package provider
 import (
 	"log"
 	"path/filepath"
-
-	"github.com/sergief/terraform-provider-synology/client"
+	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 )
 
 type FileItemService struct {
@@ -54,3 +53,41 @@ func (service FolderItemService) Delete(path string) error {
 	return service.synologyClient.Delete(path, true)
 
 }
+
+type GuestService struct {
+	synologyClient client.SynologyClient
+}
+
+func (service GuestService) Create(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (error) {
+	log.Println("Create VMM Guest " + string(name))
+	_, err := service.synologyClient.CreateGuest(name, storage_id, storage_name, vnics, vdisks)
+	return err
+}
+
+func (service GuestService) Read(name string) ([]byte, error) {
+	log.Println("Read VMM Guest " + string(name))
+	content, err := service.synologyClient.ReadGuest(name)
+	return content, err
+}
+
+func (service GuestService) Update(name string, new_name string) (error) {
+	log.Println("Update VMM Guest from " + string(name) + " to " + string(new_name))
+	err := service.synologyClient.UpdateGuest(name, new_name)
+	return err
+}
+
+func (service GuestService) Delete(name string) (error) {
+	log.Println("Delete VMM Guest" + string(name))
+	err := service.synologyClient.DeleteGuest(name)
+	return err
+}
+
+// func (service GuestService) Read(name string) error {
+// 	log.Println("Create VMM Guest" + string(name))
+// 	return service.synologyClient.CreateGuest(name, storage_id, storage_name, vnics, vdisks)
+// }
+
+// func (service GuestService) Delete() error {
+// 	log.Println("Delete VMM Guest")
+// 	return service.synologyClient.
+// }

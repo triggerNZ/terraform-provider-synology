@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/sergief/terraform-provider-synology/provider"
+	"github.com/arnouthoebreckx/terraform-provider-synology/provider"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
