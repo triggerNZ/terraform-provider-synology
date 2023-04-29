@@ -23,6 +23,16 @@ func guestItem() *schema.Resource {
 				Required:	true,
 				Description: "The guest name",
 			},
+            "description": {
+                Type:		 schema.TypeString,
+				Optional:    true,
+				Description: "Optional. The description of the guest.",
+            },
+            "auto_run": {
+                Type:		 schema.TypeInt,
+				Optional:    true,
+				Description: "Optional. 0: off 1: last state 2: on",
+            },
 			"storage_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -33,6 +43,16 @@ func guestItem() *schema.Resource {
 				Optional:    true,
 				Description: "Optional. The id of storage where the guest resides. Note: At least storage_id or storage_name should be given.",
 			},
+            "vcpu_num": {
+                Type:        schema.TypeInt,
+                Optional:    true,
+                Description: "Optional. The vCPU number",
+            },
+            "vram_size": {
+                Type:        schema.TypeInt,
+                Optional:    true,
+                Description: "Optional. The memory size in MB",
+            },
             "vnics": {
                 Type:       schema.TypeList,
                 Required:   true,
@@ -102,8 +122,8 @@ func guestCreateItem(ctx context.Context, d *schema.ResourceData, m interface{})
 
     vnics := removeEmptyEntries(d.Get("vnics").([]interface{}))
 	vdisks := removeEmptyEntries(d.Get("vdisks").([]interface{}))
-    validateIdName(vnics, "network_id", "network_name")
-    validateIdName(vdisks, "image_id", "image_name")
+    validateListIdName(vnics, "network_id", "network_name")
+    validateListIdName(vdisks, "image_id", "image_name")
 
 	service := GuestService{synologyClient: client}
 	err := service.Create(name, storage_id, storage_name, vnics, vdisks)
@@ -111,6 +131,16 @@ func guestCreateItem(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 	guestReadItem(ctx, d, m)
+
+    autorun := d.Get("auto_run").(int)
+    description := d.Get("description").(string)
+    vcpu_num := d.Get("vcpu_num").(int)
+    vram_size := d.Get("vram_size").(int)
+    err_set := service.Set(name, autorun, description, vcpu_num, vram_size)
+    if err_set != nil {
+        return diag.FromErr(err)
+    }
+
 	return diags
 }
 

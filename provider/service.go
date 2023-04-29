@@ -64,6 +64,13 @@ func (service GuestService) Create(name string, storage_id string, storage_name 
 	return err
 }
 
+func (service GuestService) Set(name string, autorun int, description string, vcpu_num int, vram_size int) (error) {
+	log.Println("Setting values on VMM Guest " + string(name))
+	log.Println("Values: " + string(autorun) + " " + description + " " + string(vcpu_num) + " " + string(vram_size))
+	err := service.synologyClient.SetGuest(name, autorun, description, vcpu_num, vram_size)
+	return err
+}
+
 func (service GuestService) Read(name string) ([]byte, error) {
 	log.Println("Read VMM Guest " + string(name))
 	content, err := service.synologyClient.ReadGuest(name)

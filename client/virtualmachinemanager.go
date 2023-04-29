@@ -53,7 +53,6 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	queryString["vdisks"] = string(vdisksString)
 
 	wsUrl := host + "/webapi/entry.cgi"
-	// _, apiResponse, err := CallAPI(host, apiName, info, queryString)
 	_, body, err := HttpCall(wsUrl, queryString)
 	
 	if err != nil {
@@ -67,6 +66,36 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	json.Unmarshal(body, &CreateGuestResponse)
 
 	return CreateGuestResponse, nil
+}
+
+func SetGuest(apiInfo map[string]InfoData, host string, sid string, name string, autorun int, description string, vcpu_num int, vram_size int) ([]byte, error) {
+	apiName := "SYNO.Virtualization.API.Guest"
+	info := apiInfo[apiName]
+
+	queryString := make(map[string]string)
+	queryString["_sid"] = sid
+	queryString["api"] = apiName
+	queryString["method"] = "set"
+	queryString["version"] = strconv.Itoa(info.MaxVersion)
+	queryString["guest_name"] = name
+	queryString["autorun"] = strconv.Itoa(autorun)
+	queryString["description"] = description
+	if vcpu_num != 0 {
+		queryString["vcpu_num"] = strconv.Itoa(vcpu_num)
+	}
+	if vram_size != 0 {
+		queryString["vram_size"] = strconv.Itoa(vram_size)
+	}
+
+	wsUrl := host + "/webapi/entry.cgi"
+
+	_, body, err := HttpCall(wsUrl, queryString)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string) ([]byte, error){
