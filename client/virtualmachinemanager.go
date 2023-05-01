@@ -2,22 +2,43 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 )
 
+type readReponse struct {
+	Data    Guest `json:"data"`
+	Success bool  `json:"success"`
+}
+
 type Guest struct {
-	autorun      int
-	description  string
-	guest_id     string
-	guest_name   string
-	status       string
-	storage_id   string
-	storage_name string
-	vcpu_num     int
-	vdisks       []VDisk
-	vnics        []VNic
-	vram_size    int
+	Autorun     int     `json:"autorun"`
+	Description string  `json:"description"`
+	GuestId     string  `json:"guest_id"`
+	GuestName   string  `json:"guest_name"`
+	Status      string  `json:"status"`
+	StorageId   string  `json:"storage_id"`
+	StorageName string  `json:"storage_name"`
+	VcpuNum     int     `json:"vcpu_num"`
+	Vdisks      []VDisk `json:"vdisks"`
+	Vnics       []VNic  `json:"vnics"`
+	VramSize    int     `json:"vram_size"`
+}
+
+type VNic struct {
+	Mac         string `json:"mac"`
+	Model       int    `json:"model"`
+	NetworkID   string `json:"network_id"`
+	NetworkName string `json:"network_name"`
+	VnicID      string `json:"vnic_id"`
+}
+
+type VDisk struct {
+	Controller int    `json:"controller"`
+	Unmap      bool   `json:"unmap"`
+	VdiskId    string `json:"vdisk_id"`
+	VdiskSize  int    `json:"vdisk_size"`
 }
 
 type GuestInfo struct {
@@ -29,19 +50,6 @@ type GuestInfo struct {
 
 type CreateGuestResponse struct {
 	task_id string
-}
-
-type VNic struct {
-	mac          string
-	network_id   string
-	network_name string
-}
-
-type VDisk struct {
-	create_type int
-	vdisk_size  int
-	image_id    string
-	image_name  string
 }
 
 func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error) {
@@ -125,19 +133,19 @@ func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string
 
 	wsUrl := host + "/webapi/entry.cgi"
 
-	var guest Guest
-
 	_, body, err := HttpCall(wsUrl, queryString)
-	errJson := json.Unmarshal(body, &guest)
 	if err != nil {
 		return Guest{}, err
 	}
 
-	if errJson != nil {
+	response := readReponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Println(err.Error())
 		return Guest{}, err
 	}
 
-	return guest, nil
+	return response.Data, nil
 }
 
 func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name string, new_name string) (int, error) {
@@ -181,4 +189,25 @@ func DeleteGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	}
 
 	return statusCode, nil
+}
+
+func (g Guest) String() string {
+	str := fmt.Sprintf("Guest:\n\tGuestName: %s\n\tGuestId: %s\n\tAutorun: %d\n\tDescription: %s\n\tStatus: %s\n\tStorageName: %s\n\tStorageId: %s\n\tVcpuNum: %d\n\tVramSize: %d\n\tVdisks: [\n", g.GuestName, g.GuestId, g.Autorun, g.Description, g.Status, g.StorageName, g.StorageId, g.VcpuNum, g.VramSize)
+	for _, vdisk := range g.Vdisks {
+		str += fmt.Sprintf("\t\t%s\n", vdisk.String())
+	}
+	str += "\t]\n\tVnics: [\n"
+	for _, vnic := range g.Vnics {
+		str += fmt.Sprintf("\t\t%s\n", vnic.String())
+	}
+	str += "\t]\n"
+	return str
+}
+
+func (vnic VNic) String() string {
+	return fmt.Sprintf("VNic:\n\tMac: %s\n\tModel: %s\n\tNetworkID: %s\n\tNetworkName: %s\n\tVnicID: %s", vnic.Mac, vnic.Model, vnic.NetworkID, vnic.NetworkName, vnic.VnicID)
+}
+
+func (vdisk VDisk) String() string {
+	return fmt.Sprintf("VDisk:\n\tController: %d\n\tUnmap: %t\n\tVdiskId: %s\n\tVdiskSize: %d", vdisk.Controller, vdisk.Unmap, vdisk.VdiskId, vdisk.VdiskSize)
 }

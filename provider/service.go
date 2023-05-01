@@ -1,9 +1,9 @@
 package provider
 
 import (
+	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 	"log"
 	"path/filepath"
-	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 )
 
 type FileItemService struct {
@@ -58,32 +58,32 @@ type GuestService struct {
 	synologyClient client.SynologyClient
 }
 
-func (service GuestService) Create(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (error) {
+func (service GuestService) Create(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) error {
 	log.Println("Create VMM Guest " + string(name))
 	_, err := service.synologyClient.CreateGuest(name, storage_id, storage_name, vnics, vdisks)
 	return err
 }
 
-func (service GuestService) Set(name string, autorun int, description string, vcpu_num int, vram_size int) (error) {
+func (service GuestService) Set(name string, autorun int, description string, vcpu_num int, vram_size int) error {
 	log.Println("Setting values on VMM Guest " + string(name))
 	log.Println("Values: " + string(autorun) + " " + description + " " + string(vcpu_num) + " " + string(vram_size))
 	err := service.synologyClient.SetGuest(name, autorun, description, vcpu_num, vram_size)
 	return err
 }
 
-func (service GuestService) Read(name string) ([]byte, error) {
+func (service GuestService) Read(name string) (client.Guest, error) {
 	log.Println("Read VMM Guest " + string(name))
 	content, err := service.synologyClient.ReadGuest(name)
 	return content, err
 }
 
-func (service GuestService) Update(name string, new_name string) (error) {
+func (service GuestService) Update(name string, new_name string) error {
 	log.Println("Update VMM Guest from " + string(name) + " to " + string(new_name))
 	err := service.synologyClient.UpdateGuest(name, new_name)
 	return err
 }
 
-func (service GuestService) Delete(name string) (error) {
+func (service GuestService) Delete(name string) error {
 	log.Println("Delete VMM Guest" + string(name))
 	err := service.synologyClient.DeleteGuest(name)
 	return err
