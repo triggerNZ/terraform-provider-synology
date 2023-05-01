@@ -102,3 +102,33 @@ resource "synology_folder" "my-folder" {
   path = "/home/downloaded/sample-folder"
 }
 ```
+
+## Known issues
+
+### Vdisk size after creation seems to always follow the closest power of 2 that is greater than or equal to input
+For example.
+
+if you put
+
+```
+  vdisks {
+    create_type = 0
+    vdisk_size  = 20000
+  }
+```
+
+After another plan it will propose the change to 
+
+```
+vdisk_size  = 20480 -> 20000
+```
+
+Best way around this is by creating with the size you want and then you either add:
+
+```
+ignore_changes = [
+  vdisk_size
+]
+```
+
+or you can remove the resource and update the disk_size to what was proposed.

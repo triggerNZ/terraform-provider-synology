@@ -12,7 +12,7 @@ type SynologyClient interface {
 	Delete(path string, recursive bool) error
 	Upload(path string, createParents bool, overwrite bool, fileName string, fileContents []byte) error
 	CreateGuest(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error)
-	SetGuest(name string, autorun int, description string, vcpu_num int, vram_size int) error
+	SetGuest(oldName string, name string, autorun int, description string, vcpu_num int, vram_size int) error
 	ReadGuest(name string) (Guest, error)
 	UpdateGuest(name string, new_name string) error
 	DeleteGuest(name string) error
@@ -86,8 +86,8 @@ func (client synologyClient) CreateGuest(name string, storage_id string, storage
 	return CreateGuest(client.apiInfo, client.host, client.sid, name, storage_id, storage_name, vnics, vdisks)
 }
 
-func (client synologyClient) SetGuest(name string, autorun int, description string, vcpu_num int, vram_size int) error {
-	body, err := SetGuest(client.apiInfo, client.host, client.sid, name, autorun, description, vcpu_num, vram_size)
+func (client synologyClient) SetGuest(oldName string, name string, autorun int, description string, vcpu_num int, vram_size int) error {
+	body, err := SetGuest(client.apiInfo, client.host, client.sid, oldName, name, autorun, description, vcpu_num, vram_size)
 	log.Println(body)
 	return err
 }

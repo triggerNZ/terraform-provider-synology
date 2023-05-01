@@ -30,7 +30,7 @@ provider "synology" {
 }
 
 resource "synology_vmm_guest" "my-guest" {
-  auto_run     = 2
+  autorun     = 2
   poweron      = true
   guest_name   = "terraform-guest"
   description  = "Virtual machine setup with terraform"
@@ -57,8 +57,9 @@ resource "synology_vmm_guest" "my-guest" {
 
 ### Optional
 
-- `auto_run` (Number) Optional. 0: off 1: last state 2: on
+- `autorun` (Number) Optional. 0: off 1: last state 2: on
 - `description` (String) Optional. The description of the guest.
+- `guest_id` (String) The guest name
 - `poweron` (Boolean) Optional. Default VM is not powered on.
 - `storage_id` (String) Optional. The id of storage where the guest resides. Note: At least storage_id or storage_name should be given.
 - `storage_name` (String) Optional. The name of storage where the guest resides. Note: At least storage_id or storage_name should be given.
@@ -68,6 +69,7 @@ resource "synology_vmm_guest" "my-guest" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `status` (String) The guest status. (running/shutdown/inaccessiblen/booting/shutting_down/moving/stor_migrating/creating/importing/preparing/ha_standby/unknown/crashed/undefined
 
 <a id="nestedblock--vdisks"></a>
 ### Nested Schema for `vdisks`

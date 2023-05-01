@@ -15,7 +15,7 @@ provider "synology" {
 }
 
 resource "synology_vmm_guest" "my-guest" {
-  auto_run     = 2
+  autorun     = 2
   poweron      = true
   guest_name   = "terraform-guest"
   description  = "Virtual machine setup with terraform"

@@ -48,6 +48,10 @@ type GuestInfo struct {
 	status          string
 }
 
+type CreateGuestVnicRequest struct {
+
+}
+
 type CreateGuestResponse struct {
 	task_id string
 }
@@ -56,8 +60,12 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
-	vnicsString, _ := json.Marshal(vnics)
-	vdisksString, _ := json.Marshal(vdisks)
+	log.Println(vnics)
+	vnicList := createValidRequestMap(vnics, []string{"mac", "network_id", "network_name"})
+	vdiskList := createValidRequestMap(vdisks, []string{"create_type", "vdisk_size", "image_id", "image_name"})
+
+	vnicsString, _ := json.Marshal(vnicList)
+	vdisksString, _ := json.Marshal(vdiskList)
 
 	queryString := make(map[string]string)
 	queryString["_sid"] = sid
@@ -89,36 +97,6 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	return CreateGuestResponse, nil
 }
 
-func SetGuest(apiInfo map[string]InfoData, host string, sid string, name string, autorun int, description string, vcpu_num int, vram_size int) ([]byte, error) {
-	apiName := "SYNO.Virtualization.API.Guest"
-	info := apiInfo[apiName]
-
-	queryString := make(map[string]string)
-	queryString["_sid"] = sid
-	queryString["api"] = apiName
-	queryString["method"] = "set"
-	queryString["version"] = strconv.Itoa(info.MaxVersion)
-	queryString["guest_name"] = name
-	queryString["autorun"] = strconv.Itoa(autorun)
-	queryString["description"] = description
-	if vcpu_num != 0 {
-		queryString["vcpu_num"] = strconv.Itoa(vcpu_num)
-	}
-	if vram_size != 0 {
-		queryString["vram_size"] = strconv.Itoa(vram_size)
-	}
-
-	wsUrl := host + "/webapi/entry.cgi"
-
-	_, body, err := HttpCall(wsUrl, queryString)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
 func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string) (Guest, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
@@ -146,6 +124,39 @@ func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string
 	}
 
 	return response.Data, nil
+}
+
+func SetGuest(apiInfo map[string]InfoData, host string, sid string, oldName string, name string, autorun int, description string, vcpu_num int, vram_size int) ([]byte, error) {
+	apiName := "SYNO.Virtualization.API.Guest"
+	info := apiInfo[apiName]
+
+	queryString := make(map[string]string)
+	queryString["_sid"] = sid
+	queryString["api"] = apiName
+	queryString["method"] = "set"
+	queryString["version"] = strconv.Itoa(info.MaxVersion)
+	queryString["guest_name"] = oldName
+	if oldName != name && name != "" {
+		queryString["new_guest_name"] = name
+	}
+	queryString["autorun"] = strconv.Itoa(autorun)
+	queryString["description"] = description
+	if vcpu_num != 0 {
+		queryString["vcpu_num"] = strconv.Itoa(vcpu_num)
+	}
+	if vram_size != 0 {
+		queryString["vram_size"] = strconv.Itoa(vram_size)
+	}
+
+	wsUrl := host + "/webapi/entry.cgi"
+
+	_, body, err := HttpCall(wsUrl, queryString)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name string, new_name string) (int, error) {
@@ -203,7 +214,6 @@ func PowerGuest(apiInfo map[string]InfoData, host string, sid string, name strin
 	} else {
 		queryString["method"] = "poweroff"
 	}
-	
 	queryString["version"] = strconv.Itoa(info.MaxVersion)
 	queryString["guest_name"] = name
 
@@ -236,4 +246,22 @@ func (vnic VNic) String() string {
 
 func (vdisk VDisk) String() string {
 	return fmt.Sprintf("VDisk:\n\tController: %d\n\tUnmap: %t\n\tVdiskId: %s\n\tVdiskSize: %d", vdisk.Controller, vdisk.Unmap, vdisk.VdiskId, vdisk.VdiskSize)
+}
+
+func createValidRequestMap(input []interface{}, allowedKeys []string) []map[string]interface{} {
+	var output []map[string]interface{}
+
+    for _, elem := range input {
+        if v, ok := elem.(map[string]interface{}); ok {
+            filtered := make(map[string]interface{})
+            for _, k := range allowedKeys {
+                if val, found := v[k]; found && val != nil && val != "" {
+                    filtered[k] = val
+                }
+            }
+            output = append(output, filtered)
+        }
+    }
+
+    return output
 }

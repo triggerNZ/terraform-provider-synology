@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"time"
+    "fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,6 +24,12 @@ func guestItem() *schema.Resource {
 				Required:    true,
 				Description: "The guest name",
 			},
+            "guest_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+                Computed:    true,
+				Description: "The guest name",
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -34,16 +41,20 @@ func guestItem() *schema.Resource {
                 Default:     false,
                 Description: "Optional. Default VM is not powered on.",
             },
-			"auto_run": {
+			"autorun": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
 				Description: "Optional. 0: off 1: last state 2: on",
 			},
+            "status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The guest status. (running/shutdown/inaccessiblen/booting/shutting_down/moving/stor_migrating/creating/importing/preparing/ha_standby/unknown/crashed/undefined",
+			},
 			"storage_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				Description: "Optional. The name of storage where the guest resides. Note: At least storage_id or storage_name should be given.",
 			},
 			"storage_id": {
@@ -85,12 +96,13 @@ func guestItem() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
+                            ForceNew:    true,
 							Description: "Optional. Connected network group id. At least network_id or network_name should be given. Note: network_id can be an empty string to represent not being connected.",
 						},
 						"network_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Computed:    true,
+                            ForceNew:    true,
 							Description: "Optional. Connected network group name. At least network_id or network_name should be given.",
 						},
 						"vnic_id": {
@@ -110,23 +122,34 @@ func guestItem() *schema.Resource {
 						"create_type": {
 							Type:        schema.TypeInt,
 							Required:    true,
+                            ForceNew:    true,
 							Description: "0: Create an empty vDisk, 1: Clone an existing image",
 						},
 						"vdisk_size": {
 							Type:        schema.TypeInt,
 							Optional:    true,
+                            ForceNew:    true,
 							Description: "Optional. If create_type is 0, this field must be set. The created vDisk size in MB.",
+                            ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+                                if size, ok := val.(int); ok {
+                                    if size < 10240 {
+                                        errs = append(errs, fmt.Errorf("%q must be greater than 10240", key))
+                                    }
+                                }
+                                return
+                            },
 						},
 						"image_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Optional:    true,
+                            ForceNew:    true,
 							Description: "Optional. If create_type is 1, at least image_id or image_name should be given. The id of the image that is to be cloned. Note: Image type should be disk.",
 						},
 						"image_name": {
 							Type:        schema.TypeString,
-							Computed:    true,
 							Optional:    true,
+                            ForceNew:    true,
 							Description: "Optional. If create_type is 1, at least image_id or image_name should be given. The name of the image that is to be cloned. Note: Image type should be disk.",
 						},
 						"controller": {
@@ -153,7 +176,7 @@ func guestItem() *schema.Resource {
 
 func mapFromGuestToData(d *schema.ResourceData, guest client.Guest) {
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-	d.Set("autorun", guest.Autorun)
+	d.Set("autorun", string(guest.Autorun))
 	d.Set("description", guest.Description)
 	d.Set("guest_id", guest.GuestId)
 	d.Set("guest_name", guest.GuestName)
@@ -184,7 +207,6 @@ func mapFromGuestToData(d *schema.ResourceData, guest client.Guest) {
 		vnics[i] = vnicMap
 	}
 
-	log.Println(vnics)
 	d.Set("vnics", vnics)
 	d.Set("vram_size", guest.VramSize)
 
@@ -206,16 +228,17 @@ func resourceGuestCreateItem(ctx context.Context, d *schema.ResourceData, m inte
 	validateListIdName(vdisks, "image_id", "image_name")
 
 	service := GuestService{synologyClient: client}
+
 	err := service.Create(name, storage_id, storage_name, vnics, vdisks)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	autorun := d.Get("auto_run").(int)
+	autorun := d.Get("autorun").(int)
 	description := d.Get("description").(string)
 	vcpu_num := d.Get("vcpu_num").(int)
 	vram_size := d.Get("vram_size").(int)
-	err = service.Set(name, autorun, description, vcpu_num, vram_size)
+	err = service.Set(name, "", autorun, description, vcpu_num, vram_size)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -254,34 +277,46 @@ func resourceGuestReadItem(ctx context.Context, d *schema.ResourceData, m interf
 func resourceGuestUpdateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(client.SynologyClient)
-	service := GuestService{synologyClient: client}
+    client := m.(client.SynologyClient)
+    service := GuestService{synologyClient: client}
 
-	name := d.Get("guest_name").(string)
-	autorun := d.Get("auto_run").(int)
-	description := d.Get("description").(string)
-	vcpu_num := d.Get("vcpu_num").(int)
-	vram_size := d.Get("vram_size").(int)
-	err := service.Set(name, autorun, description, vcpu_num, vram_size)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+    name := d.Get("guest_name").(string)
+    oldName := name
+    if d.HasChange("guest_name") {
+        old, new := d.GetChange("guest_name")
+        oldName = old.(string)
+        name = new.(string)
+    }
+    autorun := d.Get("autorun").(int)
+    description := d.Get("description").(string)
+    vcpuNum := d.Get("vcpu_num").(int)
+    vramSize := d.Get("vram_size").(int)
 
-    poweron := d.Get("poweron").(bool)
-    err = service.Power(name, poweron)
+    // Turn off VM to make changes to name
+    err := service.Power(oldName, false)
     if err != nil {
-		return diag.FromErr(err)
-	}
+        return diag.FromErr(err)
+    }
+    // Add a sleep here to give time for the guest to shut down
+    time.Sleep(10 * time.Second)
 
-	if d.HasChange("guest_name") {
-		name, new_name := d.GetChange("guest_name")
-		err := service.Update(name.(string), new_name.(string))
-		log.Println(err)
-	}
+    err = service.Set(oldName, name, autorun, description, vcpuNum, vramSize)
+    if err != nil {
+        return diag.FromErr(err)
+    }
 
-	resourceGuestReadItem(ctx, d, m)
+    // Add a sleep here to give time for the guest to update
+    time.Sleep(2 * time.Second)
 
-	return diags
+    powerOn := d.Get("poweron").(bool)
+    err = service.Power(name, powerOn)
+    if err != nil {
+        return diag.FromErr(err)
+    }
+
+    resourceGuestReadItem(ctx, d, m)
+
+    return diags
 }
 
 func resourceGuestDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -291,11 +326,25 @@ func resourceGuestDeleteItem(ctx context.Context, d *schema.ResourceData, m inte
 	service := GuestService{synologyClient: client}
 	name := d.Get("guest_name").(string)
 
-	err := service.Delete(name)
+    // Incase of recreate turn off the VM
+    err := service.Power(name, false)
+    if err != nil {
+        return diag.FromErr(err)
+    }
+    time.Sleep(10 * time.Second)
+
+	err = service.Delete(name)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	return diags
+}
+
+func getShutdownNeeded(d *schema.ResourceData, shutdown_updates []string) bool {
+    if d.HasChanges(shutdown_updates...) {
+        return true
+    }
+    return false
 }
