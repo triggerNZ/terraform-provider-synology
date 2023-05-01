@@ -4,6 +4,7 @@ import (
 	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 	"log"
 	"path/filepath"
+	"strconv"
 )
 
 type FileItemService struct {
@@ -84,17 +85,13 @@ func (service GuestService) Update(name string, new_name string) error {
 }
 
 func (service GuestService) Delete(name string) error {
-	log.Println("Delete VMM Guest" + string(name))
+	log.Println("Delete VMM Guest " + string(name))
 	err := service.synologyClient.DeleteGuest(name)
 	return err
 }
 
-// func (service GuestService) Read(name string) error {
-// 	log.Println("Create VMM Guest" + string(name))
-// 	return service.synologyClient.CreateGuest(name, storage_id, storage_name, vnics, vdisks)
-// }
-
-// func (service GuestService) Delete() error {
-// 	log.Println("Delete VMM Guest")
-// 	return service.synologyClient.
-// }
+func (service GuestService) Power(name string, state bool) error {
+	log.Println("Setting VMM Guest " + string(name) + " poweron state to " + strconv.FormatBool(state))
+	err := service.synologyClient.PowerGuest(name, state)
+	return err
+}

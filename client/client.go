@@ -16,6 +16,7 @@ type SynologyClient interface {
 	ReadGuest(name string) (Guest, error)
 	UpdateGuest(name string, new_name string) error
 	DeleteGuest(name string) error
+	PowerGuest(name string, state bool) error
 }
 
 type synologyClient struct {
@@ -103,6 +104,12 @@ func (client synologyClient) UpdateGuest(name string, new_name string) error {
 
 func (client synologyClient) DeleteGuest(name string) error {
 	statusCode, err := DeleteGuest(client.apiInfo, client.host, client.sid, name)
+	log.Println(statusCode)
+	return err
+}
+
+func (client synologyClient) PowerGuest(name string, state bool) error {
+	statusCode, err := PowerGuest(client.apiInfo, client.host, client.sid, name, state)
 	log.Println(statusCode)
 	return err
 }

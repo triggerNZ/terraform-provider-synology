@@ -28,6 +28,12 @@ func guestItem() *schema.Resource {
 				Optional:    true,
 				Description: "Optional. The description of the guest.",
 			},
+            "poweron": {
+                Type:        schema.TypeBool,
+                Optional:    true,
+                Default:     false,
+                Description: "Optional. Default VM is not powered on.",
+            },
 			"auto_run": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -209,9 +215,15 @@ func resourceGuestCreateItem(ctx context.Context, d *schema.ResourceData, m inte
 	description := d.Get("description").(string)
 	vcpu_num := d.Get("vcpu_num").(int)
 	vram_size := d.Get("vram_size").(int)
-	err_set := service.Set(name, autorun, description, vcpu_num, vram_size)
-	if err_set != nil {
-		return diag.FromErr(err_set)
+	err = service.Set(name, autorun, description, vcpu_num, vram_size)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+    poweron := d.Get("poweron").(bool)
+    err = service.Power(name, poweron)
+    if err != nil {
+		return diag.FromErr(err)
 	}
 
 	resourceGuestReadItem(ctx, d, m)
@@ -250,9 +262,15 @@ func resourceGuestUpdateItem(ctx context.Context, d *schema.ResourceData, m inte
 	description := d.Get("description").(string)
 	vcpu_num := d.Get("vcpu_num").(int)
 	vram_size := d.Get("vram_size").(int)
-	err_set := service.Set(name, autorun, description, vcpu_num, vram_size)
-	if err_set != nil {
-		return diag.FromErr(err_set)
+	err := service.Set(name, autorun, description, vcpu_num, vram_size)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+    poweron := d.Get("poweron").(bool)
+    err = service.Power(name, poweron)
+    if err != nil {
+		return diag.FromErr(err)
 	}
 
 	if d.HasChange("guest_name") {

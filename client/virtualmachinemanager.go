@@ -191,6 +191,32 @@ func DeleteGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	return statusCode, nil
 }
 
+func PowerGuest(apiInfo map[string]InfoData, host string, sid string, name string, state bool) (int, error) {
+	apiName := "SYNO.Virtualization.API.Guest.Action"
+	info := apiInfo[apiName]
+
+	queryString := make(map[string]string)
+	queryString["_sid"] = sid
+	queryString["api"] = apiName
+	if state {
+		queryString["method"] = "poweron"
+	} else {
+		queryString["method"] = "poweroff"
+	}
+	
+	queryString["version"] = strconv.Itoa(info.MaxVersion)
+	queryString["guest_name"] = name
+
+	wsUrl := host + "/webapi/entry.cgi"
+
+	statusCode, _, err := HttpCall(wsUrl, queryString)
+	if err != nil {
+		return statusCode, err
+	}
+
+	return statusCode, nil
+}
+
 func (g Guest) String() string {
 	str := fmt.Sprintf("Guest:\n\tGuestName: %s\n\tGuestId: %s\n\tAutorun: %d\n\tDescription: %s\n\tStatus: %s\n\tStorageName: %s\n\tStorageId: %s\n\tVcpuNum: %d\n\tVramSize: %d\n\tVdisks: [\n", g.GuestName, g.GuestId, g.Autorun, g.Description, g.Status, g.StorageName, g.StorageId, g.VcpuNum, g.VramSize)
 	for _, vdisk := range g.Vdisks {
