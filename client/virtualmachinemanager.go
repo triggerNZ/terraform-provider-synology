@@ -2,32 +2,46 @@ package client
 
 import (
 	"encoding/json"
-	"strconv"
 	"log"
+	"strconv"
 )
 
+type Guest struct {
+	autorun      int
+	description  string
+	guest_id     string
+	guest_name   string
+	status       string
+	storage_id   string
+	storage_name string
+	vcpu_num     int
+	vdisks       []VDisk
+	vnics        []VNic
+	vram_size    int
+}
+
 type GuestInfo struct {
-	auto_clean_task     bool
-    guest_id            string
-    progress            int
-    status              string
+	auto_clean_task bool
+	guest_id        string
+	progress        int
+	status          string
 }
 
 type CreateGuestResponse struct {
-	task_id             string
+	task_id string
 }
 
 type VNic struct {
-	mac					string
-	network_id			string
-	network_name		string
+	mac          string
+	network_id   string
+	network_name string
 }
 
 type VDisk struct {
-	create_type			int
-	vdisk_size			int
-	image_id			string
-	image_name			string
+	create_type int
+	vdisk_size  int
+	image_id    string
+	image_name  string
 }
 
 func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error) {
@@ -37,7 +51,7 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	vnicsString, _ := json.Marshal(vnics)
 	vdisksString, _ := json.Marshal(vdisks)
 
-    queryString := make(map[string]string)
+	queryString := make(map[string]string)
 	queryString["_sid"] = sid
 	queryString["api"] = apiName
 	queryString["method"] = "create"
@@ -54,13 +68,12 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 
 	wsUrl := host + "/webapi/entry.cgi"
 	_, body, err := HttpCall(wsUrl, queryString)
-	
+
 	if err != nil {
 		return CreateGuestResponse{}, err
 	}
 
 	log.Println("Create VMM Guest body" + string(body))
-
 
 	var CreateGuestResponse CreateGuestResponse
 	json.Unmarshal(body, &CreateGuestResponse)
@@ -98,7 +111,7 @@ func SetGuest(apiInfo map[string]InfoData, host string, sid string, name string,
 	return body, nil
 }
 
-func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string) ([]byte, error){
+func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string) (Guest, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
@@ -108,18 +121,26 @@ func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string
 	queryString["method"] = "get"
 	queryString["version"] = strconv.Itoa(info.MaxVersion)
 	queryString["guest_name"] = name
+	queryString["additional"] = "true"
 
 	wsUrl := host + "/webapi/entry.cgi"
 
+	var guest Guest
+
 	_, body, err := HttpCall(wsUrl, queryString)
+	errJson := json.Unmarshal(body, &guest)
 	if err != nil {
-		return nil, err
+		return Guest{}, err
 	}
 
-	return body, nil
+	if errJson != nil {
+		return Guest{}, err
+	}
+
+	return guest, nil
 }
 
-func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name string, new_name string) (int, error){
+func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name string, new_name string) (int, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
@@ -141,7 +162,7 @@ func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	return statusCode, nil
 }
 
-func DeleteGuest(apiInfo map[string]InfoData, host string, sid string, name string) (int, error){
+func DeleteGuest(apiInfo map[string]InfoData, host string, sid string, name string) (int, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
