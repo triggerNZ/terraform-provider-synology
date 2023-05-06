@@ -49,7 +49,6 @@ type GuestInfo struct {
 }
 
 type CreateGuestVnicRequest struct {
-
 }
 
 type CreateGuestResponse struct {
@@ -251,17 +250,17 @@ func (vdisk VDisk) String() string {
 func createValidRequestMap(input []interface{}, allowedKeys []string) []map[string]interface{} {
 	var output []map[string]interface{}
 
-    for _, elem := range input {
-        if v, ok := elem.(map[string]interface{}); ok {
-            filtered := make(map[string]interface{})
-            for _, k := range allowedKeys {
-                if val, found := v[k]; found && val != nil && val != "" {
-                    filtered[k] = val
-                }
-            }
-            output = append(output, filtered)
-        }
-    }
+	for _, elem := range input {
+		if v, ok := elem.(map[string]interface{}); ok {
+			filtered := make(map[string]interface{})
+			for _, k := range allowedKeys {
+				if val, found := v[k]; found && val != nil && val != "" {
+					filtered[k] = val
+				}
+			}
+			output = append(output, filtered)
+		}
+	}
 
-    return output
+	return output
 }

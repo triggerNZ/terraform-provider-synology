@@ -2,11 +2,11 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"github.com/arnouthoebreckx/terraform-provider-synology/client"
 	"log"
 	"strconv"
 	"time"
-    "fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -24,10 +24,10 @@ func guestItem() *schema.Resource {
 				Required:    true,
 				Description: "The guest name",
 			},
-            "guest_id": {
+			"guest_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-                Computed:    true,
+				Computed:    true,
 				Description: "The guest name",
 			},
 			"description": {
@@ -35,19 +35,19 @@ func guestItem() *schema.Resource {
 				Optional:    true,
 				Description: "Optional. The description of the guest.",
 			},
-            "poweron": {
-                Type:        schema.TypeBool,
-                Optional:    true,
-                Default:     false,
-                Description: "Optional. Default VM is not powered on.",
-            },
+			"poweron": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Optional. Default VM is not powered on.",
+			},
 			"autorun": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
 				Description: "Optional. 0: off 1: last state 2: on",
 			},
-            "status": {
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The guest status. (running/shutdown/inaccessiblen/booting/shutting_down/moving/stor_migrating/creating/importing/preparing/ha_standby/unknown/crashed/undefined",
@@ -96,13 +96,13 @@ func guestItem() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
-                            ForceNew:    true,
+							ForceNew:    true,
 							Description: "Optional. Connected network group id. At least network_id or network_name should be given. Note: network_id can be an empty string to represent not being connected.",
 						},
 						"network_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
-                            ForceNew:    true,
+							ForceNew:    true,
 							Description: "Optional. Connected network group name. At least network_id or network_name should be given.",
 						},
 						"vnic_id": {
@@ -122,34 +122,34 @@ func guestItem() *schema.Resource {
 						"create_type": {
 							Type:        schema.TypeInt,
 							Required:    true,
-                            ForceNew:    true,
+							ForceNew:    true,
 							Description: "0: Create an empty vDisk, 1: Clone an existing image",
 						},
 						"vdisk_size": {
 							Type:        schema.TypeInt,
 							Optional:    true,
-                            ForceNew:    true,
+							ForceNew:    true,
 							Description: "Optional. If create_type is 0, this field must be set. The created vDisk size in MB.",
-                            ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-                                if size, ok := val.(int); ok {
-                                    if size < 10240 {
-                                        errs = append(errs, fmt.Errorf("%q must be greater than 10240", key))
-                                    }
-                                }
-                                return
-                            },
+							ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+								if size, ok := val.(int); ok {
+									if size < 10240 {
+										errs = append(errs, fmt.Errorf("%q must be greater than 10240", key))
+									}
+								}
+								return
+							},
 						},
 						"image_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Optional:    true,
-                            ForceNew:    true,
+							ForceNew:    true,
 							Description: "Optional. If create_type is 1, at least image_id or image_name should be given. The id of the image that is to be cloned. Note: Image type should be disk.",
 						},
 						"image_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
-                            ForceNew:    true,
+							ForceNew:    true,
 							Description: "Optional. If create_type is 1, at least image_id or image_name should be given. The name of the image that is to be cloned. Note: Image type should be disk.",
 						},
 						"controller": {
@@ -254,7 +254,6 @@ func resourceGuestCreateItem(ctx context.Context, d *schema.ResourceData, m inte
 	return diags
 }
 
-
 func resourceGuestReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -329,12 +328,12 @@ func resourceGuestDeleteItem(ctx context.Context, d *schema.ResourceData, m inte
 	service := GuestService{synologyClient: client}
 	name := d.Get("guest_name").(string)
 
-    // Incase of recreate turn off the VM
-    err := service.Power(name, false)
-    if err != nil {
-        return diag.FromErr(err)
-    }
-    time.Sleep(10 * time.Second)
+	// Incase of recreate turn off the VM
+	err := service.Power(name, false)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	time.Sleep(10 * time.Second)
 
 	err = service.Delete(name)
 
@@ -346,8 +345,8 @@ func resourceGuestDeleteItem(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func getShutdownNeeded(d *schema.ResourceData, shutdown_updates []string) bool {
-    if d.HasChanges(shutdown_updates...) {
-        return true
-    }
-    return false
+	if d.HasChanges(shutdown_updates...) {
+		return true
+	}
+	return false
 }
