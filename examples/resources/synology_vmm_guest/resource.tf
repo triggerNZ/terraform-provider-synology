@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     synology = {
-      version = "0.1"
+      version = "0.2.0"
       source  = "github.com/arnouthoebreckx/synology"
     }
   }
@@ -15,7 +15,7 @@ provider "synology" {
 }
 
 resource "synology_vmm_guest" "my-guest" {
-  autorun     = 2
+  autorun      = 2
   poweron      = true
   guest_name   = "terraform-guest"
   description  = "Virtual machine setup with terraform"

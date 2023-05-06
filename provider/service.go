@@ -94,3 +94,30 @@ func (service GuestService) Power(name string, state bool) error {
 	err := service.synologyClient.PowerGuest(name, state)
 	return err
 }
+
+type StorageGuestService struct {
+	synologyClient client.SynologyClient
+}
+
+func (service StorageGuestService) Read() (client.StorageResponse, error) {
+	content, err := service.synologyClient.ReadStorageGuest()
+	return content, err
+}
+
+type NetworkGuestService struct {
+	synologyClient client.SynologyClient
+}
+
+func (service NetworkGuestService) Read() (client.NetworkResponse, error) {
+	content, err := service.synologyClient.ReadNetworkGuest()
+	return content, err
+}
+
+type HostGuestService struct {
+	synologyClient client.SynologyClient
+}
+
+func (service HostGuestService) Read() (client.HostResponse, error) {
+	content, err := service.synologyClient.ReadHostGuest()
+	return content, err
+}

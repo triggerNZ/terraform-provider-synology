@@ -3,13 +3,50 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 )
 
-type readReponse struct {
-	Data    Guest `json:"data"`
-	Success bool  `json:"success"`
+type readResponse struct {
+	Data    interface{} `json:"data"`
+	Success bool        `json:"success"`
+}
+
+type NetworkResponse struct {
+	Networks []Network `json:"networks"`
+}
+
+type Network struct {
+	NetworkID   string `json:"network_id"`
+	NetworkName string `json:"network_name"`
+}
+
+type StorageResponse struct {
+	Storages []Storage `json:"storages"`
+}
+
+type Storage struct {
+	HostID      string `json:"host_id"`
+	HostName    string `json:"host_name"`
+	Size        int    `json:"size"`
+	Status      string `json:"status"`
+	StorageID   string `json:"storage_id"`
+	StorageName string `json:"storage_name"`
+	Used        int    `json:"used"`
+	VolumePath  string `json:"volume_path"`
+}
+
+type HostResponse struct {
+	Hosts []Host `json:"hosts"`
+}
+
+type Host struct {
+	FreeCpuCore  int    `json:"free_cpu_core"`
+	FreeRamSize  int    `json:"free_ram_size"`
+	HostID       string `json:"host_id"`
+	HostName     string `json:"host_name"`
+	Status       string `json:"status"`
+	TotalCpuCore int    `json:"total_cpu_core"`
+	TotalRamSize int    `json:"total_ram_size"`
 }
 
 type Guest struct {
@@ -59,7 +96,6 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
-	log.Println(vnics)
 	vnicList := createValidRequestMap(vnics, []string{"mac", "network_id", "network_name"})
 	vdiskList := createValidRequestMap(vdisks, []string{"create_type", "vdisk_size", "image_id", "image_name"})
 
@@ -88,8 +124,6 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 		return CreateGuestResponse{}, err
 	}
 
-	log.Println("Create VMM Guest body" + string(body))
-
 	var CreateGuestResponse CreateGuestResponse
 	json.Unmarshal(body, &CreateGuestResponse)
 
@@ -115,14 +149,29 @@ func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string
 		return Guest{}, err
 	}
 
-	response := readReponse{}
+	response := readResponse{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Println(err.Error())
 		return Guest{}, err
 	}
 
-	return response.Data, nil
+	guestData, ok := response.Data.(map[string]interface{})
+	if !ok {
+		return Guest{}, fmt.Errorf("invalid guest data")
+	}
+
+	guestJson, err := json.Marshal(guestData)
+	if err != nil {
+		return Guest{}, err
+	}
+
+	guest := Guest{}
+	err = json.Unmarshal(guestJson, &guest)
+	if err != nil {
+		return Guest{}, err
+	}
+
+	return guest, nil
 }
 
 func SetGuest(apiInfo map[string]InfoData, host string, sid string, oldName string, name string, autorun int, description string, vcpuNum int, vramSize int) ([]byte, error) {
@@ -226,6 +275,132 @@ func PowerGuest(apiInfo map[string]InfoData, host string, sid string, name strin
 	return statusCode, nil
 }
 
+func ListNetworks(apiInfo map[string]InfoData, host string, sid string) (NetworkResponse, error) {
+	apiName := "SYNO.Virtualization.API.Network"
+	info := apiInfo[apiName]
+
+	queryString := make(map[string]string)
+	queryString["_sid"] = sid
+	queryString["api"] = apiName
+	queryString["version"] = strconv.Itoa(info.MaxVersion)
+	queryString["method"] = "list"
+
+	wsUrl := host + "/webapi/entry.cgi"
+
+	_, body, err := HttpCall(wsUrl, queryString)
+	if err != nil {
+		return NetworkResponse{}, err
+	}
+
+	response := readResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return NetworkResponse{}, err
+	}
+
+	storageData, ok := response.Data.(map[string]interface{})
+	if !ok {
+		return NetworkResponse{}, fmt.Errorf("invalid NetworkResponse data")
+	}
+
+	storageJson, err := json.Marshal(storageData)
+	if err != nil {
+		return NetworkResponse{}, err
+	}
+
+	networkResponse := NetworkResponse{}
+	err = json.Unmarshal(storageJson, &networkResponse)
+	if err != nil {
+		return NetworkResponse{}, err
+	}
+
+	return networkResponse, nil
+}
+
+func ListStorages(apiInfo map[string]InfoData, host string, sid string) (StorageResponse, error) {
+	apiName := "SYNO.Virtualization.API.Storage"
+	info := apiInfo[apiName]
+
+	queryString := make(map[string]string)
+	queryString["_sid"] = sid
+	queryString["api"] = apiName
+	queryString["version"] = strconv.Itoa(info.MaxVersion)
+	queryString["method"] = "list"
+
+	wsUrl := host + "/webapi/entry.cgi"
+
+	_, body, err := HttpCall(wsUrl, queryString)
+	if err != nil {
+		return StorageResponse{}, err
+	}
+
+	response := readResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return StorageResponse{}, err
+	}
+
+	storageData, ok := response.Data.(map[string]interface{})
+	if !ok {
+		return StorageResponse{}, fmt.Errorf("invalid StorageResponse data")
+	}
+
+	storageJson, err := json.Marshal(storageData)
+	if err != nil {
+		return StorageResponse{}, err
+	}
+
+	storageResponse := StorageResponse{}
+	err = json.Unmarshal(storageJson, &storageResponse)
+	if err != nil {
+		return StorageResponse{}, err
+	}
+
+	return storageResponse, nil
+}
+
+func ListHosts(apiInfo map[string]InfoData, host string, sid string) (HostResponse, error) {
+	apiName := "SYNO.Virtualization.API.Host"
+	info := apiInfo[apiName]
+
+	queryString := make(map[string]string)
+	queryString["_sid"] = sid
+	queryString["api"] = apiName
+	queryString["version"] = strconv.Itoa(info.MaxVersion)
+	queryString["method"] = "list"
+
+	wsUrl := host + "/webapi/entry.cgi"
+
+	_, body, err := HttpCall(wsUrl, queryString)
+	if err != nil {
+		return HostResponse{}, err
+	}
+
+	response := readResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return HostResponse{}, err
+	}
+
+	storageData, ok := response.Data.(map[string]interface{})
+	if !ok {
+		return HostResponse{}, fmt.Errorf("invalid HostResponse data")
+	}
+
+	storageJson, err := json.Marshal(storageData)
+	if err != nil {
+		return HostResponse{}, err
+	}
+
+	hostResponse := HostResponse{}
+	err = json.Unmarshal(storageJson, &hostResponse)
+	if err != nil {
+		return HostResponse{}, err
+	}
+
+	return hostResponse, nil
+}
+
 func (g Guest) String() string {
 	str := fmt.Sprintf("Guest:\n\tGuestName: %s\n\tGuestId: %s\n\tAutorun: %d\n\tDescription: %s\n\tStatus: %s\n\tStorageName: %s\n\tStorageId: %s\n\tVcpuNum: %d\n\tVramSize: %d\n\tVdisks: [\n", g.GuestName, g.GuestId, g.Autorun, g.Description, g.Status, g.StorageName, g.StorageId, g.VcpuNum, g.VramSize)
 	for _, vdisk := range g.Vdisks {
@@ -245,6 +420,19 @@ func (vnic VNic) String() string {
 
 func (vdisk VDisk) String() string {
 	return fmt.Sprintf("VDisk:\n\tController: %d\n\tUnmap: %t\n\tVdiskId: %s\n\tVdiskSize: %d", vdisk.Controller, vdisk.Unmap, vdisk.VdiskId, vdisk.VdiskSize)
+}
+
+func (sr StorageResponse) String() string {
+	str := "Storages:\n\t"
+	for _, storage := range sr.Storages {
+		str += fmt.Sprintf("\t\t%s\n", storage.String())
+	}
+	return str
+}
+
+func (s Storage) String() string {
+	return fmt.Sprintf("HostID: %s\nHostName: %s\nSize: %d\nStatus: %s\nStorageID: %s\nStorageName: %s\nUsed: %d\nVolumePath: %s\n",
+		s.HostID, s.HostName, s.Size, s.Status, s.StorageID, s.StorageName, s.Used, s.VolumePath)
 }
 
 func createValidRequestMap(input []interface{}, allowedKeys []string) []map[string]interface{} {

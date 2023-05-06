@@ -17,6 +17,9 @@ type SynologyClient interface {
 	UpdateGuest(name string, new_name string) error
 	DeleteGuest(name string) error
 	PowerGuest(name string, state bool) error
+	ReadStorageGuest() (StorageResponse, error)
+	ReadNetworkGuest() (NetworkResponse, error)
+	ReadHostGuest() (HostResponse, error)
 }
 
 type synologyClient struct {
@@ -112,6 +115,18 @@ func (client synologyClient) PowerGuest(name string, state bool) error {
 	statusCode, err := PowerGuest(client.apiInfo, client.host, client.sid, name, state)
 	log.Println(statusCode)
 	return err
+}
+
+func (client synologyClient) ReadStorageGuest() (StorageResponse, error) {
+	return ListStorages(client.apiInfo, client.host, client.sid)
+}
+
+func (client synologyClient) ReadNetworkGuest() (NetworkResponse, error) {
+	return ListNetworks(client.apiInfo, client.host, client.sid)
+}
+
+func (client synologyClient) ReadHostGuest() (HostResponse, error) {
+	return ListHosts(client.apiInfo, client.host, client.sid)
 }
 
 func NewClient() SynologyClient {
