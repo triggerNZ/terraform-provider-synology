@@ -13,10 +13,10 @@ import (
 
 func fileItem() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: fileCreateItem,
-		ReadContext:   fileReadItem,
-		UpdateContext: fileUpdateItem,
-		DeleteContext: fileDeleteItem,
+		CreateContext: resourceFileCreateItem,
+		ReadContext:   resourceFileReadItem,
+		UpdateContext: resourceFileUpdateItem,
+		DeleteContext: resourceFileDeleteItem,
 		Schema: map[string]*schema.Schema{
 			"content": {
 				Type:        schema.TypeString,
@@ -32,7 +32,7 @@ func fileItem() *schema.Resource {
 	}
 }
 
-func fileCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceFileCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(client.SynologyClient)
@@ -45,11 +45,11 @@ func fileCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	fileReadItem(ctx, d, m)
+	resourceFileReadItem(ctx, d, m)
 	return diags
 }
 
-func fileReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceFileReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(client.SynologyClient)
@@ -70,11 +70,11 @@ func fileReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	return diags
 }
 
-func fileUpdateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return fileCreateItem(ctx, d, m)
+func resourceFileUpdateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return resourceFileCreateItem(ctx, d, m)
 }
 
-func fileDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceFileDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(client.SynologyClient)

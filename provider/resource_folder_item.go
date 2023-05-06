@@ -13,10 +13,10 @@ import (
 
 func folderItem() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: folderCreateItem,
-		ReadContext:   folderReadItem,
-		UpdateContext: folderUpdateItem,
-		DeleteContext: folderDeleteItem,
+		CreateContext: resourceFolderCreateItem,
+		ReadContext:   resourceFolderReadItem,
+		UpdateContext: resourceFolderUpdateItem,
+		DeleteContext: resourceFolderDeleteItem,
 		Schema: map[string]*schema.Schema{
 			"path": {
 				Type:        schema.TypeString,
@@ -27,7 +27,7 @@ func folderItem() *schema.Resource {
 	}
 }
 
-func folderCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceFolderCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(client.SynologyClient)
@@ -39,11 +39,11 @@ func folderCreateItem(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	folderReadItem(ctx, d, m)
+	resourceFolderReadItem(ctx, d, m)
 	return diags
 }
 
-func folderReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceFolderReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	path := d.Get("path").(string)
@@ -54,11 +54,11 @@ func folderReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	return diags
 }
 
-func folderUpdateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return folderCreateItem(ctx, d, m)
+func resourceFolderUpdateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return resourceFolderCreateItem(ctx, d, m)
 }
 
-func folderDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceFolderDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(client.SynologyClient)

@@ -56,7 +56,7 @@ type CreateGuestResponse struct {
 	task_id string
 }
 
-func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error) {
+func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name string, storageId string, storageName string, vnics []interface{}, vdisks []interface{}) (CreateGuestResponse, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
@@ -73,11 +73,11 @@ func CreateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	queryString["method"] = "create"
 	queryString["version"] = strconv.Itoa(info.MaxVersion)
 	queryString["guest_name"] = name
-	if storage_id != "" {
-		queryString["storage_id"] = storage_id
+	if storageId != "" {
+		queryString["storage_id"] = storageId
 	}
-	if storage_name != "" {
-		queryString["storage_name"] = storage_name
+	if storageName != "" {
+		queryString["storage_name"] = storageName
 	}
 	queryString["vnics"] = string(vnicsString)
 	queryString["vdisks"] = string(vdisksString)
@@ -126,7 +126,7 @@ func ReadGuest(apiInfo map[string]InfoData, host string, sid string, name string
 	return response.Data, nil
 }
 
-func SetGuest(apiInfo map[string]InfoData, host string, sid string, oldName string, name string, autorun int, description string, vcpu_num int, vram_size int) ([]byte, error) {
+func SetGuest(apiInfo map[string]InfoData, host string, sid string, oldName string, name string, autorun int, description string, vcpuNum int, vramSize int) ([]byte, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
@@ -141,11 +141,11 @@ func SetGuest(apiInfo map[string]InfoData, host string, sid string, oldName stri
 	}
 	queryString["autorun"] = strconv.Itoa(autorun)
 	queryString["description"] = description
-	if vcpu_num != 0 {
-		queryString["vcpu_num"] = strconv.Itoa(vcpu_num)
+	if vcpuNum != 0 {
+		queryString["vcpu_num"] = strconv.Itoa(vcpuNum)
 	}
-	if vram_size != 0 {
-		queryString["vram_size"] = strconv.Itoa(vram_size)
+	if vramSize != 0 {
+		queryString["vram_size"] = strconv.Itoa(vramSize)
 	}
 
 	wsUrl := host + "/webapi/entry.cgi"
@@ -159,7 +159,7 @@ func SetGuest(apiInfo map[string]InfoData, host string, sid string, oldName stri
 	return body, nil
 }
 
-func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name string, new_name string) (int, error) {
+func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name string, newName string) (int, error) {
 	apiName := "SYNO.Virtualization.API.Guest"
 	info := apiInfo[apiName]
 
@@ -169,7 +169,7 @@ func UpdateGuest(apiInfo map[string]InfoData, host string, sid string, name stri
 	queryString["method"] = "set"
 	queryString["version"] = strconv.Itoa(info.MaxVersion)
 	queryString["guest_name"] = name
-	queryString["new_guest_name"] = new_name
+	queryString["new_guest_name"] = newName
 
 	wsUrl := host + "/webapi/entry.cgi"
 
@@ -241,7 +241,7 @@ func (g Guest) String() string {
 }
 
 func (vnic VNic) String() string {
-	return fmt.Sprintf("VNic:\n\tMac: %s\n\tModel: %s\n\tNetworkID: %s\n\tNetworkName: %s\n\tVnicID: %s", vnic.Mac, vnic.Model, vnic.NetworkID, vnic.NetworkName, vnic.VnicID)
+	return fmt.Sprintf("VNic:\n\tMac: %s\n\tModel: %d\n\tNetworkID: %s\n\tNetworkName: %s\n\tVnicID: %s", vnic.Mac, vnic.Model, vnic.NetworkID, vnic.NetworkName, vnic.VnicID)
 }
 
 func (vdisk VDisk) String() string {

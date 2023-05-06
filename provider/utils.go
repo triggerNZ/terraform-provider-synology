@@ -21,7 +21,7 @@ func removeEmptyEntries(objectList []interface{}) []interface{} {
 	return objectList
 }
 
-func validateListIdName(objectList []interface{}, id string, name string) diag.Diagnostics {
+func validateListIDName(objectList []interface{}, id string, name string) diag.Diagnostics {
 	for _, obj := range objectList {
 		m, ok := obj.(*schema.ResourceData)
 		if !ok {
@@ -39,7 +39,7 @@ func validateListIdName(objectList []interface{}, id string, name string) diag.D
 	return nil
 }
 
-func validateIdName(id string, name string) diag.Diagnostics {
+func validateIDName(id string, name string) diag.Diagnostics {
 	if id == "" && name == "" {
 		return diag.Errorf("Either %s or %s must be provided", id, name)
 	}

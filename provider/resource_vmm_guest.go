@@ -176,7 +176,7 @@ func guestItem() *schema.Resource {
 
 func mapFromGuestToData(d *schema.ResourceData, guest client.Guest) {
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-	d.Set("autorun", string(guest.Autorun))
+	d.Set("autorun", fmt.Sprint(guest.Autorun))
 	d.Set("description", guest.Description)
 	d.Set("guest_id", guest.GuestId)
 	d.Set("guest_name", guest.GuestName)
@@ -218,34 +218,34 @@ func resourceGuestCreateItem(ctx context.Context, d *schema.ResourceData, m inte
 	client := m.(client.SynologyClient)
 
 	name := d.Get("guest_name").(string)
-	storage_id := d.Get("storage_id").(string)
-	storage_name := d.Get("storage_name").(string)
-	validateIdName(storage_id, storage_name)
+	storageID := d.Get("storage_id").(string)
+	storageName := d.Get("storage_name").(string)
+	validateIDName(storageID, storageName)
 
 	vnics := removeEmptyEntries(d.Get("vnics").([]interface{}))
 	vdisks := removeEmptyEntries(d.Get("vdisks").([]interface{}))
-	validateListIdName(vnics, "network_id", "network_name")
-	validateListIdName(vdisks, "image_id", "image_name")
+	validateListIDName(vnics, "network_id", "network_name")
+	validateListIDName(vdisks, "image_id", "image_name")
 
 	service := GuestService{synologyClient: client}
 
-	err := service.Create(name, storage_id, storage_name, vnics, vdisks)
+	err := service.Create(name, storageID, storageName, vnics, vdisks)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	autorun := d.Get("autorun").(int)
 	description := d.Get("description").(string)
-	vcpu_num := d.Get("vcpu_num").(int)
-	vram_size := d.Get("vram_size").(int)
-	err = service.Set(name, "", autorun, description, vcpu_num, vram_size)
+	vcpuNum := d.Get("vcpu_num").(int)
+	vramSize := d.Get("vram_size").(int)
+	err = service.Set(name, "", autorun, description, vcpuNum, vramSize)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-    poweron := d.Get("poweron").(bool)
-    err = service.Power(name, poweron)
-    if err != nil {
+	powerOn := d.Get("poweron").(bool)
+	err = service.Power(name, powerOn)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -254,11 +254,13 @@ func resourceGuestCreateItem(ctx context.Context, d *schema.ResourceData, m inte
 	return diags
 }
 
+
 func resourceGuestReadItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(client.SynologyClient)
 	service := GuestService{synologyClient: client}
+
 	name := d.Get("guest_name").(string)
 
 	guest, err := service.Read(name)
@@ -266,9 +268,8 @@ func resourceGuestReadItem(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	log.Println("log: " + guest.String())
+	log.Printf("Guest information: %+v", guest)
 
-	log.Println(d.Get("storage_id"))
 	mapFromGuestToData(d, guest)
 
 	return diags
@@ -277,46 +278,48 @@ func resourceGuestReadItem(ctx context.Context, d *schema.ResourceData, m interf
 func resourceGuestUpdateItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-    client := m.(client.SynologyClient)
-    service := GuestService{synologyClient: client}
+	client := m.(client.SynologyClient)
+	service := GuestService{synologyClient: client}
 
-    name := d.Get("guest_name").(string)
-    oldName := name
-    if d.HasChange("guest_name") {
-        old, new := d.GetChange("guest_name")
-        oldName = old.(string)
-        name = new.(string)
-    }
-    autorun := d.Get("autorun").(int)
-    description := d.Get("description").(string)
-    vcpuNum := d.Get("vcpu_num").(int)
-    vramSize := d.Get("vram_size").(int)
+	name := d.Get("guest_name").(string)
+	oldName := name
+	if d.HasChange("guest_name") {
+		old, new := d.GetChange("guest_name")
+		oldName = old.(string)
+		name = new.(string)
+	}
 
-    // Turn off VM to make changes to name
-    err := service.Power(oldName, false)
-    if err != nil {
-        return diag.FromErr(err)
-    }
-    // Add a sleep here to give time for the guest to shut down
-    time.Sleep(10 * time.Second)
+	autorun := d.Get("autorun").(int)
+	description := d.Get("description").(string)
+	vcpuNum := d.Get("vcpu_num").(int)
+	vramSize := d.Get("vram_size").(int)
 
-    err = service.Set(oldName, name, autorun, description, vcpuNum, vramSize)
-    if err != nil {
-        return diag.FromErr(err)
-    }
+	// Turn off VM to make changes to name
+	err := service.Power(oldName, false)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-    // Add a sleep here to give time for the guest to update
-    time.Sleep(2 * time.Second)
+	// Add a sleep here to give time for the guest to shut down
+	time.Sleep(10 * time.Second)
 
-    powerOn := d.Get("poweron").(bool)
-    err = service.Power(name, powerOn)
-    if err != nil {
-        return diag.FromErr(err)
-    }
+	err = service.Set(oldName, name, autorun, description, vcpuNum, vramSize)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-    resourceGuestReadItem(ctx, d, m)
+	// Add a sleep here to give time for the guest to update
+	time.Sleep(2 * time.Second)
 
-    return diags
+	powerOn := d.Get("poweron").(bool)
+	err = service.Power(name, powerOn)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	resourceGuestReadItem(ctx, d, m)
+
+	return diags
 }
 
 func resourceGuestDeleteItem(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

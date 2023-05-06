@@ -59,15 +59,15 @@ type GuestService struct {
 	synologyClient client.SynologyClient
 }
 
-func (service GuestService) Create(name string, storage_id string, storage_name string, vnics []interface{}, vdisks []interface{}) error {
+func (service GuestService) Create(name string, storageID string, storageName string, vnics []interface{}, vdisks []interface{}) error {
 	log.Println("Create VMM Guest " + string(name))
-	_, err := service.synologyClient.CreateGuest(name, storage_id, storage_name, vnics, vdisks)
+	_, err := service.synologyClient.CreateGuest(name, storageID, storageName, vnics, vdisks)
 	return err
 }
 
-func (service GuestService) Set(oldName string, name string, autorun int, description string, vcpu_num int, vram_size int) error {
+func (service GuestService) Set(oldName string, name string, autorun int, description string, vcpuNum int, vramSize int) error {
 	log.Println("Setting values on VMM Guest " + string(name))
-	err := service.synologyClient.SetGuest(oldName, name, autorun, description, vcpu_num, vram_size)
+	err := service.synologyClient.SetGuest(oldName, name, autorun, description, vcpuNum, vramSize)
 	return err
 }
 
@@ -77,9 +77,9 @@ func (service GuestService) Read(name string) (client.Guest, error) {
 	return content, err
 }
 
-func (service GuestService) Update(name string, new_name string) error {
-	log.Println("Update VMM Guest from " + string(name) + " to " + string(new_name))
-	err := service.synologyClient.UpdateGuest(name, new_name)
+func (service GuestService) Update(name string, newName string) error {
+	log.Println("Update VMM Guest from " + string(name) + " to " + string(newName))
+	err := service.synologyClient.UpdateGuest(name, newName)
 	return err
 }
 
